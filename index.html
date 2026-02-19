@@ -3,1447 +3,447 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARENA PEDIDOS - Sistema de Pedidos de Filmes</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>StreamVault - Loja de Streamings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'orbitron': ['Orbitron', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif'],
+                        'russo': ['Russo One', 'sans-serif'],
+                    },
+                    colors: {
+                        'neon-red': '#ff2d2d',
+                        'neon-orange': '#ff6b35',
+                        'neon-purple': '#8b5cf6',
+                        'neon-blue': '#3b82f6',
+                        'neon-green': '#10b981',
+                        'dark-bg': '#0a0a0a',
+                        'card-bg': '#141414',
+                    },
+                    animation: {
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 8s linear infinite',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px var(--theme-color), 0 0 10px var(--theme-color)' },
+                            '100%': { boxShadow: '0 0 20px var(--theme-color), 0 0 30px var(--theme-color-2)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --primary: #ff6b35;
-            --secondary: #f7931e;
-            --dark: #0a0a0a;
-            --darker: #050505;
-            --light: #ffffff;
-            --gray: #1a1a1a;
-            --success: #00d26a;
-            --danger: #ff3333;
-            --warning: #ffc107;
-            --info: #3498db;
+            --theme-color: #ff2d2d;
+            --theme-color-2: #ff6b35;
+            --theme-bg: #0a0a0a;
         }
-
+        
         body {
-            font-family: 'Roboto', sans-serif;
-            background: var(--darker);
-            color: var(--light);
+            background: var(--theme-bg);
             min-height: 100vh;
-            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
         }
-
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(247, 147, 30, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 20%, rgba(255, 107, 53, 0.1) 0%, transparent 50%);
-            animation: pulse 8s ease-in-out infinite;
+        
+        .glass-effect {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+        
+        .neon-text {
+            text-shadow: 0 0 10px var(--theme-color), 0 0 20px var(--theme-color);
         }
-
-        header {
-            background: linear-gradient(135deg, var(--dark) 0%, var(--gray) 100%);
-            padding: 1rem 2rem;
-            border-bottom: 3px solid var(--primary);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            color: var(--light);
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--primary);
-            color: var(--light);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: var(--dark);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: var(--light);
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: var(--dark);
-        }
-
-        .btn-info {
-            background: var(--info);
-            color: var(--light);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .section {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .hero {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(247, 147, 30, 0.05) 100%);
-            border-radius: 20px;
-            margin-bottom: 3rem;
-            border: 1px solid rgba(255, 107, 53, 0.2);
-        }
-
-        .hero h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, var(--light), var(--secondary));
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-color-2) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .hero p {
-            font-size: 1.2rem;
-            color: #aaa;
-            max-width: 600px;
-            margin: 0 auto 2rem;
+        
+        .product-card {
+            background: linear-gradient(145deg, #141414 0%, #1a1a1a 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .order-form {
-            background: var(--gray);
-            padding: 2.5rem;
-            border-radius: 15px;
-            border: 1px solid rgba(255, 107, 53, 0.3);
-            max-width: 600px;
-            margin: 0 auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        
+        .product-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(var(--theme-rgb), 0.3);
+            border-color: var(--theme-color);
         }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--secondary);
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 1rem;
-            background: var(--dark);
-            border: 2px solid #333;
-            border-radius: 8px;
-            color: var(--light);
-            font-size: 1rem;
+        
+        .category-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s ease;
         }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .popular-movies {
-            margin-top: 3rem;
-        }
-
-        .section-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            color: var(--secondary);
-        }
-
-        .movies-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .movie-card {
-            background: var(--gray);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .movie-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
-        }
-
-        .movie-poster {
-            width: 100%;
-            height: 280px;
-            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .movie-poster::before {
-            content: '🎬';
-            font-size: 4rem;
-            opacity: 0.3;
-        }
-
-        .movie-info {
-            padding: 1rem;
-        }
-
-        .movie-title {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--light);
-        }
-
-        .movie-year {
-            color: #888;
-            font-size: 0.9rem;
-        }
-
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(0, 210, 106, 0.1);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            border: 1px solid var(--success);
-            color: var(--success);
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .live-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse-live 1.5s infinite;
-        }
-
-        @keyframes pulse-live {
-            0% { box-shadow: 0 0 0 0 rgba(0, 210, 106, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 210, 106, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 210, 106, 0); }
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--gray) 0%, #252525 100%);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-card h3 {
-            color: #888;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-number {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            color: var(--secondary);
-            font-weight: 700;
-        }
-
-        .filters {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 0.6rem 1.2rem;
-            background: var(--gray);
-            border: 2px solid #333;
-            color: var(--light);
-            border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: var(--light);
-        }
-
-        .orders-table-container {
-            background: var(--gray);
-            border-radius: 15px;
-            overflow: hidden;
-            border: 1px solid rgba(255, 107, 53, 0.2);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .orders-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .orders-table th {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            padding: 1.2rem 1rem;
-            text-align: left;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-        }
-
-        .orders-table td {
-            padding: 1.2rem 1rem;
-            border-bottom: 1px solid #333;
-        }
-
-        .orders-table tr {
-            transition: all 0.3s ease;
-        }
-
-        .orders-table tr:hover {
-            background: rgba(255, 107, 53, 0.05);
-        }
-
-        .orders-table tr.new-order {
-            animation: highlightNew 2s ease;
-        }
-
-        @keyframes highlightNew {
-            0% { background: rgba(0, 210, 106, 0.3); }
-            100% { background: transparent; }
-        }
-
-        .orders-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .status-badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            display: inline-block;
-        }
-
-        .status-pending {
-            background: rgba(255, 193, 7, 0.2);
-            color: var(--warning);
-            border: 1px solid var(--warning);
-        }
-
-        .status-completed {
-            background: rgba(0, 210, 106, 0.2);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .status-cancelled {
-            background: rgba(255, 51, 51, 0.2);
-            color: var(--danger);
-            border: 1px solid var(--danger);
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .btn-small {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.8rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-complete {
-            background: var(--success);
-            color: var(--dark);
-        }
-
-        .btn-cancel {
-            background: var(--danger);
-            color: var(--light);
-        }
-
-        .btn-delete {
-            background: #444;
-            color: var(--light);
-        }
-
-        .btn-small:hover {
+        
+        .category-card:hover, .category-card.active {
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-color-2) 100%);
+            border-color: transparent;
             transform: scale(1.05);
-            opacity: 0.9;
         }
-
-        .modal {
-            display: none;
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-color-2) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .admin-hidden { display: none !important; }
+        .admin-visible { display: block !important; }
+        
+        .floating-nav {
             position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+        }
+        
+        .logo-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-color-2) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(var(--theme-rgb), 0.5);
+        }
+        
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--theme-bg);
+            border-radius: 10px;
+        }
+        
+        .logo-icon svg {
+            position: relative;
+            z-index: 1;
+            color: var(--theme-color);
+        }
+        
+        .logo-text {
+            font-family: 'Russo One', sans-serif;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+        
+        .logo-text span {
+            color: var(--theme-color);
+            text-shadow: 0 0 20px rgba(var(--theme-rgb), 0.8);
+        }
+        
+        .payment-methods {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+        }
+        
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
+            height: 2px;
+            background: linear-gradient(90deg, var(--theme-color), var(--theme-color-2));
         }
-
-        .modal.active {
-            display: flex;
+        
+        .qr-container canvas {
+            border-radius: 12px;
+            padding: 12px;
+            background: white;
         }
-
-        .modal-content {
-            background: var(--gray);
-            padding: 3rem;
-            border-radius: 15px;
-            border: 2px solid var(--primary);
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(255, 107, 53, 0.3);
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .modal-header h2 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .notification {
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: var(--theme-color); border-radius: 4px; }
+        
+        .toast {
             position: fixed;
             top: 100px;
             right: 20px;
-            padding: 1.5rem;
-            background: var(--gray);
-            border-left: 4px solid var(--success);
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, var(--theme-color) 0%, var(--theme-color-2) 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             transform: translateX(400px);
             transition: transform 0.3s ease;
-            z-index: 999;
-            max-width: 350px;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.error {
-            border-left-color: var(--danger);
-        }
-
-        .notification.warning {
-            border-left-color: var(--warning);
-        }
-
-        .notification.info {
-            border-left-color: var(--info);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #666;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .order-details {
-            background: var(--dark);
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 8px;
-            border-left: 3px solid var(--primary);
-            display: none;
-            font-size: 0.9rem;
-        }
-
-        .order-details.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; max-height: 0; }
-            to { opacity: 1; max-height: 200px; }
-        }
-
-        .detail-row {
+            z-index: 9999;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
+            align-items: center;
+            gap: 12px;
         }
-
-        .detail-label {
-            color: #888;
+        
+        .toast.show { transform: translateX(0); }
+        
+        .password-strength {
+            height: 4px;
+            border-radius: 2px;
+            transition: all 0.3s;
         }
-
-        .detail-value {
-            color: var(--light);
-            font-weight: 500;
-        }
-
-        .expand-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
+        
+        .theme-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.9rem;
-            text-decoration: underline;
-            margin-top: 0.5rem;
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
         }
-
-        .sound-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--gray);
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            padding: 1rem;
+        
+        .theme-preview:hover { transform: scale(1.1); }
+        .theme-preview.active { border-color: white; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
+        
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--theme-color);
             border-radius: 50%;
-            cursor: pointer;
-            z-index: 100;
-            font-size: 1.2rem;
-            transition: all 0.3s ease;
+            animation: spin 1s linear infinite;
         }
-
-        .sound-toggle:hover {
-            background: var(--primary);
-            color: var(--light);
-        }
-
-        .sound-toggle.muted {
-            opacity: 0.5;
-            border-color: #666;
-            color: #666;
-        }
-
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .orders-table-container {
-                overflow-x: auto;
-            }
-
-            .orders-table {
-                min-width: 800px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--light);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .setup-wizard {
-            background: var(--gray);
-            padding: 2rem;
-            border-radius: 15px;
-            border: 2px solid var(--primary);
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-
-        .setup-wizard h2 {
-            color: var(--secondary);
-            margin-bottom: 1rem;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .setup-step {
-            background: var(--dark);
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 1rem;
-            border-left: 4px solid var(--primary);
-        }
-
-        .setup-step h3 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .code-block {
-            background: #000;
-            padding: 1rem;
-            border-radius: 5px;
-            font-family: monospace;
-            color: var(--success);
-            margin: 0.5rem 0;
-            overflow-x: auto;
-            font-size: 0.9rem;
-        }
-
-        .copy-btn {
-            background: var(--primary);
-            color: var(--light);
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .copy-btn:hover {
-            background: var(--secondary);
-        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-<base target="_blank">
 </head>
-<body>
-    <div class="bg-animation"></div>
+<body class="text-white overflow-x-hidden">
 
-    <!-- Som de notificação -->
-    <audio id="notificationSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE" type="audio/wav">
-    </audio>
-
-    <header>
-        <div class="header-content">
-            <div class="logo">ARENA <span style="color: var(--light);">PEDIDOS</span></div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="connection-status" id="connectionStatus">
-                    <div class="status-dot"></div>
-                    <span>Conectado</span>
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4">
+        <div class="glass-effect rounded-3xl p-8 max-w-md w-full border border-white/10 modal-enter">
+            <div class="text-center mb-8">
+                <div class="logo-container justify-center mb-4">
+                    <div class="logo-icon mx-auto">
+                        <i data-lucide="shield" class="w-6 h-6"></i>
+                    </div>
                 </div>
-                <div class="nav-buttons">
-                    <button class="btn btn-secondary" onclick="showSection('home')">Novo Pedido</button>
-                    <button class="btn btn-primary" onclick="showSection('admin')">Painel Admin</button>
+                <h2 class="font-russo text-2xl mb-2">Área Restrita</h2>
+                <p class="text-gray-400">Digite a senha de administrador</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <input type="password" id="adminPassword" placeholder="Senha de acesso" 
+                        class="w-full bg-black/50 border border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[var(--theme-color)] transition-colors text-center text-lg tracking-widest">
+                </div>
+                <button type="submit" class="w-full btn-primary py-3 rounded-xl font-bold text-lg">
+                    Acessar Painel
+                </button>
+            </form>
+            
+            <button onclick="closeLogin()" class="w-full mt-4 text-gray-400 hover:text-white transition-colors">
+                Voltar para a Loja
+            </button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-40 glass-effect border-b border-white/10 transition-all duration-300" id="mainHeader">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="logo-container cursor-pointer" onclick="showSection('home')">
+                    <div class="logo-icon">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <div class="logo-text">
+                        STREAM<span>VAULT</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Nav -->
+                <nav class="hidden lg:flex items-center gap-8">
+                    <button onclick="showSection('home')" class="hover:text-[var(--theme-color)] transition-colors font-medium">Início</button>
+                    <button onclick="scrollToProducts()" class="hover:text-[var(--theme-color)] transition-colors font-medium">Produtos</button>
+                    <button onclick="showSection('categories')" class="hover:text-[var(--theme-color)] transition-colors font-medium">Categorias</button>
+                    <button onclick="showSection('support')" class="hover:text-[var(--theme-color)] transition-colors font-medium">Suporte</button>
+                </nav>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleAdminLogin()" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10">
+                        <i data-lucide="lock" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Admin</span>
+                    </button>
+                    
+                    <button onclick="showCart()" class="relative p-3 rounded-full bg-white/5 hover:bg-white/10 transition-colors border border-white/10 group">
+                        <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:text-[var(--theme-color)] transition-colors"></i>
+                        <span id="cartCount" class="absolute -top-1 -right-1 bg-[var(--theme-color)] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse">0</span>
+                    </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <div class="notification" id="notification">
-        <div id="notificationText"></div>
-    </div>
+    <div class="h-20"></div>
 
-    <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="Ativar/Desativar som">
-        🔊
-    </button>
+    <!-- Hero Section -->
+    <section id="hero" class="relative overflow-hidden mb-12">
+        <div class="absolute inset-0 bg-gradient-to-r from-[var(--theme-color)]/20 to-transparent"></div>
+        <div class="absolute top-20 right-20 w-96 h-96 bg-[var(--theme-color)]/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        
+        <div class="container mx-auto px-4 py-12 relative z-10">
+            <div class="bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-8 md:p-12 border border-white/10 relative overflow-hidden backdrop-blur-xl">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <div class="inline-flex items-center gap-2 bg-[var(--theme-color)]/20 px-4 py-2 rounded-full border border-[var(--theme-color)]/30 animate-float">
+                            <i data-lucide="flame" class="w-4 h-4 text-[var(--theme-color)]"></i>
+                            <span class="text-sm font-bold text-[var(--theme-color)]">PROMOÇÃO ESPECIAL</span>
+                        </div>
+                        
+                        <h1 class="font-russo text-5xl md:text-7xl leading-tight">
+                            ATÉ <span class="text-[var(--theme-color)] neon-text text-6xl md:text-8xl">90%</span><br>
+                            DE ECONOMIA!
+                        </h1>
+                        
+                        <p class="text-gray-300 text-lg md:text-xl max-w-lg leading-relaxed">
+                            Adquira as melhores assinaturas de streaming com entrega automática e garantia de funcionamento.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="scrollToProducts()" class="btn-primary px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-[var(--theme-color)]/30">
+                                Explorar Ofertas <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                            <button onclick="showSection('how-it-works')" class="px-8 py-4 rounded-full font-bold text-lg border border-white/20 hover:bg-white/5 transition-colors flex items-center gap-2">
+                                <i data-lucide="play-circle" class="w-5 h-5"></i> Como Funciona
+                            </button>
+                        </div>
 
-    <!-- Modal de Login -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>🔐 Área Restrita</h2>
-                <p>Acesso ao painel administrativo</p>
-            </div>
-            <div class="form-group">
-                <label>Senha de Administrador</label>
-                <input type="password" id="adminPassword" placeholder="Digite a senha..." onkeypress="if(event.key==='Enter')login()">
-            </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="login()">Entrar</button>
-            <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="closeLogin()">Cancelar</button>
-        </div>
-    </div>
-
-    <div class="container">
-        <!-- Seção de Configuração (mostrada apenas se não configurado) -->
-        <section id="setup" class="section">
-            <div class="setup-wizard">
-                <h2>⚙️ Configuração Inicial</h2>
-                <p style="margin-bottom: 1.5rem; color: #aaa;">Para que os pedidos apareçam em tempo real para você, precisamos configurar o banco de dados. Siga os passos abaixo:</p>
-                
-                <div class="setup-step">
-                    <h3>1. Crie uma conta no Firebase</h3>
-                    <p>Acesse <a href="https://console.firebase.google.com" target="_blank" style="color: var(--primary);">console.firebase.google.com</a> e crie um projeto gratuito.</p>
-                </div>
-
-                <div class="setup-step">
-                    <h3>2. Ative o Realtime Database</h3>
-                    <p>No menu lateral, clique em "Realtime Database" e crie um banco de dados. Escolha o modo "Bloqueado" por enquanto.</p>
-                </div>
-
-                <div class="setup-step">
-                    <h3>3. Copie as credenciais</h3>
-                    <p>Clique no ícone ⚙️ (Configurações do projeto) > "Configuração do SDK". Copie o objeto firebaseConfig.</p>
-                    <div class="code-block" id="configExample">
-const firebaseConfig = {
-    apiKey: "sua-api-key",
-    authDomain: "seu-projeto.firebaseapp.com",
-    databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-};
-                    </div>
-                    <button class="copy-btn" onclick="copyConfig()">Copiar exemplo</button>
-                </div>
-
-                <div class="setup-step">
-                    <h3>4. Cole as credenciais abaixo</h3>
-                    <div class="form-group">
-                        <label>Cole o objeto firebaseConfig completo aqui:</label>
-                        <textarea id="firebaseConfigInput" rows="6" placeholder='Cole aqui: {"apiKey": "...", ...}'></textarea>
-                    </div>
-                    <button class="btn btn-primary" onclick="saveFirebaseConfig()" style="width: 100%;">💾 Salvar e Conectar</button>
-                </div>
-
-                <div style="margin-top: 1rem; padding: 1rem; background: rgba(255, 107, 53, 0.1); border-radius: 8px; border-left: 4px solid var(--primary);">
-                    <strong>💡 Dica:</strong> Se não quiser configurar agora, o sistema funcionará no modo local (apenas neste dispositivo).
-                </div>
-            </div>
-        </section>
-
-        <!-- Seção Home -->
-        <section id="home" class="section active">
-            <div class="hero">
-                <h1>🎬 Peça seu Filme</h1>
-                <p>Escolha um filme e faça seu pedido. Nossa equipe receberá em tempo real!</p>
-            </div>
-
-            <div class="order-form">
-                <h2 style="margin-bottom: 1.5rem; color: var(--secondary); font-family: 'Orbitron', sans-serif;">
-                    📝 Novo Pedido
-                </h2>
-                <form id="orderForm" onsubmit="submitOrder(event)">
-                    <div class="form-group">
-                        <label>Seu Nome *</label>
-                        <input type="text" id="customerName" required placeholder="Como devemos te chamar?">
+                        <div class="flex items-center gap-6 pt-4">
+                            <div class="flex -space-x-3">
+                                <img src="https://i.pravatar.cc/100?img=1" class="w-10 h-10 rounded-full border-2 border-black">
+                                <img src="https://i.pravatar.cc/100?img=2" class="w-10 h-10 rounded-full border-2 border-black">
+                                <img src="https://i.pravatar.cc/100?img=3" class="w-10 h-10 rounded-full border-2 border-black">
+                                <div class="w-10 h-10 rounded-full border-2 border-black bg-[var(--theme-color)] flex items-center justify-center text-xs font-bold">+5k</div>
+                            </div>
+                            <p class="text-sm text-gray-400">Clientes satisfeitos</p>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Nome do Filme *</label>
-                        <input type="text" id="movieName" required placeholder="Qual filme você quer assistir?">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Ano do Filme</label>
-                        <input type="number" id="movieYear" placeholder="Ex: 2024" min="1900" max="2030">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Gênero</label>
-                        <select id="movieGenre">
-                            <option value="">Selecione...</option>
-                            <option value="Ação">Ação</option>
-                            <option value="Animação">Animação</option>
-                            <option value="Aventura">Aventura</option>
-                            <option value="Comédia">Comédia</option>
-                            <option value="Documentário">Documentário</option>
-                            <option value="Drama">Drama</option>
-                            <option value="Ficção Científica">Ficção Científica</option>
-                            <option value="Horror">Horror/Terror</option>
-                            <option value="Romance">Romance</option>
-                            <option value="Suspense">Suspense</option>
-                            <option value="Outro">Outro</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Observações / Prioridade</label>
-                        <textarea id="observations" placeholder="Dublado ou legendado? Qualidade preferida? Urgente?"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1.2rem;" id="submitBtn">
-                        🚀 Enviar Pedido
-                    </button>
-                </form>
-            </div>
-
-            <div class="popular-movies">
-                <h2 class="section-title">🍿 Clique para sugerir</h2>
-                <div class="movies-grid" id="popularMovies"></div>
-            </div>
-        </section>
-
-        <!-- Seção Admin -->
-        <section id="admin" class="section">
-            <div class="admin-header">
-                <div>
-                    <h1 style="font-family: 'Orbitron', sans-serif; color: var(--secondary); margin-bottom: 0.5rem;">
-                        📊 Painel de Controle
-                    </h1>
-                    <p style="color: #888;">Gerencie todos os pedidos em tempo real</p>
-                </div>
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <div class="live-indicator">
-                        <div class="live-dot"></div>
-                        <span>AO VIVO</span>
-                    </div>
-                    <button class="btn btn-secondary" onclick="logout()">Sair</button>
-                </div>
-            </div>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>📥 Total Recebido</h3>
-                    <div class="stat-number" id="statTotal">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>⏳ Pendentes</h3>
-                    <div class="stat-number" id="statPending" style="color: var(--warning);">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>✅ Concluídos</h3>
-                    <div class="stat-number" id="statCompleted" style="color: var(--success);">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>❌ Cancelados</h3>
-                    <div class="stat-number" id="statCancelled" style="color: var(--danger);">0</div>
-                </div>
-            </div>
-
-            <div class="filters">
-                <button class="filter-btn active" onclick="filterOrders('all')">Todos</button>
-                <button class="filter-btn" onclick="filterOrders('pending')">Pendentes</button>
-                <button class="filter-btn" onclick="filterOrders('completed')">Concluídos</button>
-                <button class="filter-btn" onclick="filterOrders('cancelled')">Cancelados</button>
-                <button class="filter-btn btn-danger" onclick="clearAllOrders()" style="margin-left: auto; background: var(--danger); border-color: var(--danger);">🗑 Limpar Tudo</button>
-            </div>
-
-            <div class="orders-table-container">
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Horário</th>
-                            <th>Cliente</th>
-                            <th>Filme</th>
-                            <th>Gênero</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTableBody">
-                        <tr>
-                            <td colspan="7" class="empty-state">
-                                <div class="empty-state-icon">📭</div>
-                                <h3>Aguardando pedidos...</h3>
-                                <p>Quando alguém fizer um pedido, aparecerá aqui automaticamente!</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </div>
-
-    <script>
-        // ===== CONFIGURAÇÃO =====
-        const ADMIN_PASSWORD = 'arena2024'; // ALTERE ESTA SENHA!
-        let isAuthenticated = false;
-        let currentFilter = 'all';
-        let soundEnabled = true;
-        let db = null;
-        let ordersRef = null;
-        let localOrders = [];
-
-        // Filmes populares
-        const popularMovies = [
-            { title: 'Duna: Parte 2', year: '2024', genre: 'Ficção Científica' },
-            { title: 'Oppenheimer', year: '2023', genre: 'Drama' },
-            { title: 'Poor Things', year: '2023', genre: 'Comédia/Drama' },
-            { title: 'Wicked', year: '2024', genre: 'Musical' },
-            { title: 'Gladiador 2', year: '2024', genre: 'Ação' },
-            { title: 'Coringa 2', year: '2024', genre: 'Drama/Musical' },
-            { title: 'Deadpool & Wolverine', year: '2024', genre: 'Ação' },
-            { title: 'Divertida Mente 2', year: '2024', genre: 'Animação' }
-        ];
-
-        // Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            initPopularMovies();
-            checkFirebaseConfig();
-            
-            if (sessionStorage.getItem('adminAuth') === 'true') {
-                isAuthenticated = true;
-            }
-        });
-
-        function initPopularMovies() {
-            const grid = document.getElementById('popularMovies');
-            grid.innerHTML = popularMovies.map(movie => `
-                <div class="movie-card" onclick="fillForm('${movie.title}', '${movie.year}', '${movie.genre}')">
-                    <div class="movie-poster"></div>
-                    <div class="movie-info">
-                        <div class="movie-title">${movie.title}</div>
-                        <div class="movie-year">${movie.year} • ${movie.genre}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function fillForm(title, year, genre) {
-            document.getElementById('movieName').value = title;
-            document.getElementById('movieYear').value = year;
-            document.getElementById('movieGenre').value = genre;
-            showNotification('Filme selecionado! Complete seu pedido.', 'success');
-            document.querySelector('.order-form').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // ===== FIREBASE =====
-        function checkFirebaseConfig() {
-            const config = localStorage.getItem('firebaseConfig');
-            if (config) {
-                try {
-                    const firebaseConfig = JSON.parse(config);
-                    initFirebase(firebaseConfig);
-                    showSection('home');
-                } catch (e) {
-                    console.error('Erro ao carregar config:', e);
-                    showSection('setup');
-                }
-            } else {
-                showSection('setup');
-            }
-        }
-
-        function initFirebase(config) {
-            try {
-                firebase.initializeApp(config);
-                db = firebase.database();
-                ordersRef = db.ref('arena-pedidos');
-                
-                // Ouvir mudanças em tempo real
-                ordersRef.on('value', (snapshot) => {
-                    const data = snapshot.val();
-                    localOrders = data ? Object.entries(data).map(([key, value]) => ({...value, firebaseKey: key})) : [];
-                    updateStats();
-                    if (document.getElementById('admin').classList.contains('active')) {
-                        renderTable();
-                    }
-                });
-
-                // Ouvir novos pedidos (para notificação)
-                ordersRef.limitToLast(1).on('child_added', (snapshot) => {
-                    const order = snapshot.val();
-                    if (order.timestamp > Date.now() - 5000) { // Se foi adicionado nos últimos 5 segundos
-                        notifyNewOrder(order);
-                    }
-                });
-
-                document.getElementById('connectionStatus').innerHTML = '<div class="status-dot"></div><span>Online</span>';
-                showNotification('🟢 Conectado ao servidor! Pedidos em tempo real ativos.', 'success');
-            } catch (error) {
-                console.error('Erro Firebase:', error);
-                showNotification('❌ Erro na conexão. Modo offline ativado.', 'error');
-                initLocalMode();
-            }
-        }
-
-        function initLocalMode() {
-            // Modo fallback usando localStorage
-            localOrders = JSON.parse(localStorage.getItem('arenaOrders') || '[]');
-            updateStats();
-            document.getElementById('connectionStatus').innerHTML = '<div class="status-dot" style="background: var(--warning);"></div><span>Offline</span>';
-        }
-
-        function saveFirebaseConfig() {
-            const input = document.getElementById('firebaseConfigInput').value;
-            try {
-                // Extrair JSON do texto colado (pode vir com ou sem const firebaseConfig =)
-                let configText = input;
-                if (input.includes('const firebaseConfig')) {
-                    configText = input.match(/\{[\s\S]*\}/)[0];
-                }
-                const config = JSON.parse(configText);
-                localStorage.setItem('firebaseConfig', JSON.stringify(config));
-                location.reload(); // Recarrega para iniciar com a nova config
-            } catch (e) {
-                showNotification('❌ Configuração inválida. Verifique o formato JSON.', 'error');
-            }
-        }
-
-        function copyConfig() {
-            const text = document.getElementById('configExample').innerText;
-            navigator.clipboard.writeText(text);
-            showNotification('📋 Exemplo copiado!', 'success');
-        }
-
-        // ===== PEDIDOS =====
-        function submitOrder(e) {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerHTML = '<div class="loading-spinner"></div> Enviando...';
-            btn.disabled = true;
-
-            const order = {
-                id: Date.now(),
-                timestamp: Date.now(),
-                date: new Date().toLocaleString('pt-BR'),
-                customer: document.getElementById('customerName').value,
-                movie: document.getElementById('movieName').value,
-                year: document.getElementById('movieYear').value || 'N/A',
-                genre: document.getElementById('movieGenre').value || 'Não especificado',
-                observations: document.getElementById('observations').value || 'Nenhuma',
-                status: 'pending',
-                ip: 'anonymous' // Em produção, não capture IPs sem consentimento
-            };
-
-            if (db && ordersRef) {
-                // Modo Firebase - envia para nuvem
-                ordersRef.push(order)
-                    .then(() => {
-                        showSuccessAndReset(btn);
-                    })
-                    .catch(() => {
-                        // Fallback para localStorage
-                        saveLocal(order);
-                        showSuccessAndReset(btn);
-                    });
-            } else {
-                // Modo local
-                saveLocal(order);
-                showSuccessAndReset(btn);
-            }
-        }
-
-        function saveLocal(order) {
-            const orders = JSON.parse(localStorage.getItem('arenaOrders') || '[]');
-            orders.unshift(order);
-            localStorage.setItem('arenaOrders', JSON.stringify(orders));
-            localOrders = orders;
-            updateStats();
-        }
-
-        function showSuccessAndReset(btn) {
-            btn.innerHTML = '🚀 Enviar Pedido';
-            btn.disabled = false;
-            document.getElementById('orderForm').reset();
-            showNotification('🎉 Pedido enviado com sucesso! Recebemos em tempo real.', 'success');
-        }
-
-        function notifyNewOrder(order) {
-            // Som de notificação
-            if (soundEnabled) {
-                const audio = document.getElementById('notificationSound');
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            }
-
-            // Notificação visual se estiver no admin
-            if (document.getElementById('admin').classList.contains('active')) {
-                showNotification(`🎬 Novo pedido: ${order.movie} por ${order.customer}`, 'info');
-                
-                // Destacar nova linha
-                setTimeout(() => {
-                    const rows = document.querySelectorAll('.orders-table tr');
-                    if (rows[1]) rows[1].classList.add('new-order');
-                }, 100);
-            } else {
-                // Mostrar notificação global
-                showNotification(`📢 Novo pedido recebido: "${order.movie}"!`, 'info');
-            }
-        }
-
-        // ===== ADMIN =====
-        function showSection(section) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            
-            if (section === 'admin' && !isAuthenticated) {
-                document.getElementById('loginModal').classList.add('active');
-                return;
-            }
-            
-            if (section === 'admin') {
-                renderTable();
-            }
-            
-            document.getElementById(section).classList.add('active');
-            window.scrollTo(0, 0);
-        }
-
-        function login() {
-            const pass = document.getElementById('adminPassword').value;
-            if (pass === ADMIN_PASSWORD) {
-                isAuthenticated = true;
-                sessionStorage.setItem('adminAuth', 'true');
-                document.getElementById('loginModal').classList.remove('active');
-                document.getElementById('adminPassword').value = '';
-                showSection('admin');
-                showNotification('✅ Bem-vindo ao painel administrativo!', 'success');
-            } else {
-                showNotification('❌ Senha incorreta!', 'error');
-            }
-        }
-
-        function closeLogin() {
-            document.getElementById('loginModal').classList.remove('active');
-        }
-
-        function logout() {
-            isAuthenticated = false;
-            sessionStorage.removeItem('adminAuth');
-            showSection('home');
-            showNotification('Você saiu do painel.', 'warning');
-        }
-
-        function updateStats() {
-            document.getElementById('statTotal').textContent = localOrders.length;
-            document.getElementById('statPending').textContent = localOrders.filter(o => o.status === 'pending').length;
-            document.getElementById('statCompleted').textContent = localOrders.filter(o => o.status === 'completed').length;
-            document.getElementById('statCancelled').textContent = localOrders.filter(o => o.status === 'cancelled').length;
-        }
-
-        function filterOrders(status) {
-            currentFilter = status;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.toLowerCase().includes(status) || (status === 'all' && btn.textContent === 'Todos')) {
-                    btn.classList.add('active');
-                }
-            });
-            renderTable();
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('ordersTableBody');
-            let filtered = localOrders;
-            
-            if (currentFilter !== 'all') {
-                filtered = localOrders.filter(o => o.status === currentFilter);
-            }
-
-            // Ordenar por mais recente primeiro
-            filtered.sort((a, b) => b.timestamp - a.timestamp);
-
-            if (filtered.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="empty-state">
-                            <div class="empty-state-icon">📭</div>
-                            <h3>Nenhum pedido ${currentFilter === 'all' ? 'ainda' : 'com este status'}</h3>
-                            <p>${currentFilter === 'all' ? 'Aguardando novos pedidos...' : 'Tente outro filtro.'}</p>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(order => `
-                <tr id="order-${order.firebaseKey || order.id}">
-                    <td>#${String(order.id).slice(-6)}</td>
-                    <td>${order.date}</td>
-                    <td><strong>${escapeHtml(order.customer)}</strong></td>
-                    <td>${escapeHtml(order.movie)} ${order.year !== 'N/A' ? `(${order.year})` : ''}</td>
-                    <td><span style="background: rgba(255,107,53,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${order.genre}</span></td>
-                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
-                    <td>
-                        <div class="action-btns">
-                            ${order.status === 'pending' ? `
-                                <button class="btn-small btn-complete" onclick="updateStatus('${order.firebaseKey || order.id}', 'completed')" title="Marcar como concluído">✓</button>
-                                <button class="btn-small btn-cancel" onclick="updateStatus('${order.firebaseKey || order.id}', 'cancelled')" title="Cancelar">✕</button>
-                            ` : ''}
-                            <button class="btn-small btn-delete" onclick="deleteOrder('${order.firebaseKey || order.id}')" title="Excluir permanentemente">🗑</button>
-                        </div>
-                        <button class="expand-btn" onclick="toggleDetails('${order.firebaseKey || order.id}')">Ver detalhes</button>
-                        <div id="details-${order.firebaseKey || order.id}" class="order-details">
-                            <div class="detail-row">
-                                <span class="detail-label">Observações:</span>
-                                <span class="detail-value">${escapeHtml(order.observations)}</span>
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-[var(--theme-color)]/20 blur-3xl rounded-full"></div>
+                        <div class="relative grid grid-cols-2 gap-4">
+                            <div class="space-y-4 mt-8">
+                                <div class="bg-black/40 backdrop-blur p-4 rounded-2xl border border-white/10 animate-float" style="animation-delay: 0.5s">
+                                    <i data-lucide="tv" class="w-8 h-8 text-[var(--theme-color)] mb-2"></i>
+                                    <p class="font-bold">Netflix</p>
+                                    <p class="text-sm text-gray-400">4K Ultra HD</p>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur p-4 rounded-2xl border border-white/10 animate-float" style="animation-delay: 1s">
+                                    <i data-lucide="gamepad-2" class="w-8 h-8 text-[var(--theme-color-2)] mb-2"></i>
+                                    <p class="font-bold">Game Pass</p>
+                                    <p class="text-sm text-gray-400">100+ jogos</p>
+                                </div>
                             </div>
-                            <div class="detail-row">
-                                <span class="detail-label">ID:</span>
-                                <span class="detail-value">#${order.id}</span>
+                            <div class="space-y-4">
+                                <div class="bg-black/40 backdrop-blur p-4 rounded-2xl border border-white/10 animate-float">
+                                    <i data-lucide="bot" class="w-8 h-8 text-purple-400 mb-2"></i>
+                                    <p class="font-bold">ChatGPT Plus</p>
+                                    <p class="text-sm text-gray-400">GPT-4 Ilimitado</p>
+                                </div>
+                                <div class="bg-black/40 backdrop-blur p-4 rounded-2xl border border-white/10 animate-float" style="animation-delay: 0.7s">
+                                    <i data-lucide="music" class="w-8 h-8 text-green-400 mb-2"></i>
+                                    <p class="font-bold">Spotify</p>
+                                    <p class="text-sm text-gray-400">Premium</p>
+                                </div>
                             </div>
                         </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        function toggleDetails(key) {
-            const el = document.getElementById(`details-${key}`);
-            el.classList.toggle('show');
-        }
+    <!-- Categories Section -->
+    <section class="container mx-auto px-4 mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-russo text-2xl flex items-center gap-3">
+                <span class="w-1 h-8 bg-[var(--theme-color)] rounded-full"></span>
+                Categorias
+            </h3>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4" id="categoriesGrid">
+            <!-- Categories loaded dynamically -->
+        </div>
+    </section>
 
-        function updateStatus(key, status) {
-            if (db && ordersRef) {
-                ordersRef.child(key).update({ status: status })
-                    .then(() => showNotification(`Status atualizado para ${getStatusText(status)}`, 'success'))
-                    .catch(() => updateLocalStatus(key, status));
-            } else {
-                updateLocalStatus(key, status);
-            }
-        }
-
-        function updateLocalStatus(key, status) {
-            const orders = JSON.parse(localStorage.getItem('arenaOrders') || '[]');
-            const order = orders.find(o => o.id == key || o.firebaseKey === key);
-            if (order) {
-                order.status = status;
-                localStorage.setItem('arenaOrders', JSON.stringify(orders));
-                localOrders = orders;
-                updateStats();
-                renderTable();
-                showNotification('Status atualizado!', 'success');
-            }
-        }
-
-        function deleteOrder(key) {
-            if (!confirm('⚠️ Tem certeza que deseja EXCLUIR este pedido permanentemente?')) return;
-
-            if (db && ordersRef) {
-                ordersRef.child(key).remove()
-                    .then(() => showNotification('Pedido excluído!', 'warning'))
-                    .catch(() => deleteLocal(key));
-            } else {
-                deleteLocal(key);
-            }
-        }
-
-        function deleteLocal(key) {
-            let orders = JSON.parse(localStorage.getItem('arenaOrders') || '[]');
-            orders = orders.filter(o => o.id != key && o.firebaseKey !== key);
-            localStorage.setItem('arenaOrders', JSON.stringify(orders));
-            localOrders = orders;
-            updateStats();
-            renderTable();
-            showNotification('Pedido excluído!', 'warning');
-        }
-
-        function clearAllOrders() {
-            if (!confirm('🚨 ATENÇÃO! Isso apagará TODOS os pedidos permanentemente!\n\nTem certeza?')) return;
-            if (!confirm('Última chance! Deseja mesmo apagar todo o histórico?')) return;
-
-            if (db && ordersRef) {
-                ordersRef.remove()
-                    .then(() => {
-                        localOrders = [];
-                        updateStats();
-                        renderTable();
-                        showNotification('Todos os pedidos foram apagados!', 'warning');
-                    });
-            } else {
-                localStorage.removeItem('arenaOrders');
-                localOrders = [];
-                updateStats();
-                renderTable();
-                showNotification('Todos os pedidos foram apagados!', 'warning');
-            }
-        }
-
-        function getStatusText(status) {
-            const map = { pending: 'Pendente', completed: 'Concluído', cancelled: 'Cancelado' };
-            return map[status] || status;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            const btn = document.getElementById('soundToggle');
-            btn.textContent = soundEnabled ? '🔊' : '🔇';
-            btn.classList.toggle('muted', !soundEnabled);
-            showNotification(soundEnabled ? '🔊 Som ativado' : '🔇 Som desativado', 'info');
-        }
-
-        function showNotification(msg, type = 'success') {
-            const notif = document.getElementById('notification');
-            const text = document.getElementById('notificationText');
-            text.textContent = msg;
-            notif.className = 'notification ' + type;
-            notif.classList.add('show');
-            setTimeout(() => notif.classList.remove('show'), 4000);
-        }
-
-        // Fechar modal ao clicar fora
-        document.getElementById('loginModal').addEventListener('click', (e) => {
-            if (e.target.id === 'loginModal') closeLogin();
-        });
-    </script>
-</body>
-</html>
+    <!-- Stats -->
+    <section class="container mx-auto px-4 mb-12">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="stats-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <i data-lucide="shopping-bag" class="w-8 h-8 text-[var(--theme-color)]"></i>
+                    <span class="text-xs text-gray-400 bg-whit
